@@ -1,0 +1,26 @@
+/*
+ * HC_05_Bluetooth.h
+ *
+ *  Created on: Sep 17, 2020
+ *      Author: syang
+ */
+
+//#ifndef MY_DRIVERS_INCLUDE_HC_05_BLUETOOTH_H_
+//#define MY_DRIVERS_INCLUDE_HC_05_BLUETOOTH_H_
+
+#include <F28x_Project.h>
+#include "interrupt.h"
+
+void HC_05_init();
+char HC_05_read_byte();
+void HC_05_read_string(char* data_str);
+void HC_05_send_byte(char data);
+void HC_05_send_string(char* data_str);
+
+extern __interrupt void HC_05_RX_ISR(void);
+
+static void HC_05_GPIO_init();
+static void HC_05_SCI_init();
+
+
+//#endif /* MY_DRIVERS_INCLUDE_HC_05_BLUETOOTH_H_ */

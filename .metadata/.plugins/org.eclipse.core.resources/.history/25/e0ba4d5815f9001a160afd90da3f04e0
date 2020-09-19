@@ -1,0 +1,53 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+SHELL = cmd.exe
+
+# Add inputs and outputs from these tool invocations to the build variables 
+CMD_SRCS += \
+../2837xD_RAM_lnk_cpu1.cmd 
+
+C_SRCS += \
+../CodecGPIO.c \
+../I2CLCD.c \
+../OneToOneI2CDriver.c \
+../Part3.c \
+../SPIB.c 
+
+C_DEPS += \
+./CodecGPIO.d \
+./I2CLCD.d \
+./OneToOneI2CDriver.d \
+./Part3.d \
+./SPIB.d 
+
+OBJS += \
+./CodecGPIO.obj \
+./I2CLCD.obj \
+./OneToOneI2CDriver.obj \
+./Part3.obj \
+./SPIB.obj 
+
+OBJS__QUOTED += \
+"CodecGPIO.obj" \
+"I2CLCD.obj" \
+"OneToOneI2CDriver.obj" \
+"Part3.obj" \
+"SPIB.obj" 
+
+C_DEPS__QUOTED += \
+"CodecGPIO.d" \
+"I2CLCD.d" \
+"OneToOneI2CDriver.d" \
+"Part3.d" \
+"SPIB.d" 
+
+C_SRCS__QUOTED += \
+"../CodecGPIO.c" \
+"../I2CLCD.c" \
+"../OneToOneI2CDriver.c" \
+"../Part3.c" \
+"../SPIB.c" 
+
+

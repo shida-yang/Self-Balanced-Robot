@@ -1,0 +1,41 @@
+
+
+/**
+ * main.c
+ */
+
+//#include "interrupt.h"
+
+#include <F28x_Project.h>
+#include "HC_05_Bluetooth.h"
+
+__interrupt void HC_05_RX_ISR(void);
+
+int main(void){
+
+    //init system clocks and get board speed running at 200 MHz
+    InitSysCtrl();
+    EALLOW;
+    //disable all interrupt
+    Interrupt_initModule();
+    //init interrupt table
+    Interrupt_initVectorTable();
+    // initialize the timer structs and setup the timers in their default states
+    InitCpuTimers();
+
+    HC_05_init();
+
+    //enable global interrupt
+    Interrupt_enableMaster();
+
+    while(1){
+
+    }
+
+    return 0;
+}
+
+__interrupt void HC_05_RX_ISR(void){
+//    printf("%c\n", SciaRegs.SCIRXBUF.all);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP6);
+}

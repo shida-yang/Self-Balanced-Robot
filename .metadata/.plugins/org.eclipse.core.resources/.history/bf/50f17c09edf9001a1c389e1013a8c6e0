@@ -1,0 +1,8 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+USER_OBJS :=
+
+LIBS := -l"D:/ti/c2000/C2000Ware_3_02_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" -llibc.a
+
