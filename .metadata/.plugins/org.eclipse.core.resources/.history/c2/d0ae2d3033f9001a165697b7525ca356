@@ -1,8 +1,0 @@
-################################################################################
-# Automatically-generated file. Do not edit!
-################################################################################
-
-USER_OBJS :=
-
-LIBS := -llibc.a -l"D:/UF_HW/2020_fall_hw/EEL4924/Design2_Code/Design2_Robot/driverlib.lib"
-

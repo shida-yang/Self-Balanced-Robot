@@ -85,7 +85,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="2837xD_FLASH_lnk_cpu1.cmd|Common/F2837xD_TempSensorConv.c|Common/F2837xD_Adc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="driverlib/adc.c|2837xD_FLASH_lnk_cpu1.cmd|Common/F2837xD_TempSensorConv.c|Common/F2837xD_Adc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

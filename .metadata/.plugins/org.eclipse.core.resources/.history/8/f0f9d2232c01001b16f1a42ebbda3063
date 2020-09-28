@@ -1,0 +1,19 @@
+#include <F28x_Project.h>
+#include "interrupt.h"
+#include "i2c.h"
+
+#define MPU6050_SLAVE_ADDR  0b1101000
+
+typedef struct MPU6050_Data_Packet{
+    uint16_t accel_x;
+    uint16_t accel_y;
+    uint16_t accel_z;
+    uint16_t gyro_x;
+    uint16_t gyro_y;
+    uint16_t gyro_z;
+} MPU6050_Data_Packet_t;
+
+static void I2C_Master_Init();
+static void I2C_SendBytes(Uint16 RA, Uint16 * const values, Uint16 length);
+static void I2C_ReadBytes(Uint16 RA, Uint16 * const values, Uint16 length);
+static void InitI2CGpio();

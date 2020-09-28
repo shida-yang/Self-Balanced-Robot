@@ -1,0 +1,10 @@
+#include <F28x_Project.h>
+#include "interrupt.h"
+#include "i2c.h"
+
+#define MPU6050_SLAVE_ADDR  0b1101000
+
+static void I2C_Master_Init();
+static void I2C_SendBytes(Uint16 * const values, Uint16 length);
+static void I2C_ReadBytes(Uint16 * const values, Uint16 length);
+static void InitI2CGpio();
