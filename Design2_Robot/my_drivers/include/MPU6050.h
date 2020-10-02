@@ -1,6 +1,13 @@
 #include <F28x_Project.h>
+#include "driverlib.h"
+#include "interrupt.h"
+#include <math.h>
 
 #define MPU6050_SLAVE_ADDR  0x68
+
+#define RA_CONFIG           0x1A
+#define RA_GYRO_CONFIG      0x1B
+#define RA_ACCEL_CONFIG     0x1C
 
 #define RA_ACCEL_XOUT_H     0x3B
 #define RA_ACCEL_XOUT_L     0x3C
@@ -29,8 +36,15 @@ typedef struct MPU6050_Data_Packet{
 
 void MPU6050_Powerup();
 void MPU6050_ReadAccelGyro(MPU6050_Data_Packet_t* dp);
+float MPU6050_GetPitchAngle();
+
+static void MPU6050_Calibrate();
+static float MPU6050_GetAccelAngle();
 
 static void I2C_Master_Init();
 static void I2C_SendBytes(Uint16 RA, Uint16 * const values, Uint16 length);
 static void I2C_ReadBytes(Uint16 RA, Uint16 * const values, Uint16 length);
 static void InitI2CGpio();
+
+static void InitTimer0();
+__interrupt void cpuTimer0ISR(void);

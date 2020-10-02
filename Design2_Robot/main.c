@@ -16,6 +16,7 @@ char data2[32];
 bool send_success;
 
 MPU6050_Data_Packet_t dp;
+float angle;
 
 void tostring(char str[], int num)
 {
@@ -77,8 +78,8 @@ int main(void){
 //         }
 
         // testing MPU6050
-        MPU6050_ReadAccelGyro(&dp);
-        DELAY_US(2000);
+        angle = MPU6050_GetPitchAngle();
+        DELAY_US(5000);
     }
 
     return 0;
