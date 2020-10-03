@@ -63,3 +63,4 @@ RemoteSystemsTempFiles/*
 Debug/
 Debug/Design2_Robot_linkInfo.xml
 .metadata/*
+*.xml
