@@ -2,13 +2,15 @@
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
-		<item value="I2ca" key="selection"/>
+		<item value="I2CA" key="selection"/>
 		<item value="false" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
 			<item value="i2ca"/>
+			<item value="timer0"/>
+			<item value="timer"/>
 			<item value="i2c"/>
 			<item value="32"/>
 			<item value="Interrupt_clearACKGroup"/>

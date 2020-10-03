@@ -15777,3 +15777,33 @@ Finished building target: "Design2_Robot.out"
  
 
 **** Build Finished ****
+
+**** Build of configuration Debug for project Design2_Robot ****
+
+"D:\\CCS\\ccs\\utils\\bin\\gmake" -k -j 8 all -O 
+ 
+Building file: "../main.c"
+Invoking: C2000 Compiler
+"D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/device_support/f2837xd/headers/include" --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/device_support/f2837xd/common/include" --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/driverlib/f2837xd/driverlib" --include_path="D:/UF_HW/2020_fall_hw/EEL4924/Design2_Code/Design2_Robot" --include_path="D:/UF_HW/2020_fall_hw/EEL4924/Design2_Code/Design2_Robot/my_drivers/include" --include_path="D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/include" --define=CPU1 --define=_DUAL_HEADERS --define=_LAUNCHXL_F28379D -g --c99 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi --preproc_with_compile --preproc_dependency="main.d_raw"  "../main.c"
+"../main.c", line 85: warning #112-D: statement is unreachable
+Finished building: "../main.c"
+ 
+Building file: "../my_drivers/source/MPU6050.c"
+Invoking: C2000 Compiler
+"D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/device_support/f2837xd/headers/include" --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/device_support/f2837xd/common/include" --include_path="D:/ti/c2000/C2000Ware_3_02_00_00/driverlib/f2837xd/driverlib" --include_path="D:/UF_HW/2020_fall_hw/EEL4924/Design2_Code/Design2_Robot" --include_path="D:/UF_HW/2020_fall_hw/EEL4924/Design2_Code/Design2_Robot/my_drivers/include" --include_path="D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/include" --define=CPU1 --define=_DUAL_HEADERS --define=_LAUNCHXL_F28379D -g --c99 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi --preproc_with_compile --preproc_dependency="my_drivers/source/MPU6050.d_raw" --obj_directory="my_drivers/source"  "../my_drivers/source/MPU6050.c"
+"../my_drivers/source/MPU6050.c", line 107 (col. 43): advice #2614-D: (Performance) Use --fp_mode=relaxed to enable TMU hardware support for FP division.
+Finished building: "../my_drivers/source/MPU6050.c"
+ 
+Building target: "Design2_Robot.out"
+Invoking: C2000 Linker
+"D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 --define=CPU1 --define=_DUAL_HEADERS --define=_LAUNCHXL_F28379D -g --c99 --diag_warning=225 --diag_wrap=off --display_error_number --abi=coffabi -z -m"Design2_Robot.map" --stack_size=0x200 --warn_sections -i"D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/lib" -i"D:/CCS/ccs/tools/compiler/ti-cgt-c2000_18.12.6.LTS/include" --reread_libs --diag_wrap=off --display_error_number --xml_link_info="Design2_Robot_linkInfo.xml" --rom_model -o "Design2_Robot.out" "./main.obj" "./Common/F2837xD_CodeStartBranch.obj" "./Common/F2837xD_CpuTimers.obj" "./Common/F2837xD_DBGIER.obj" "./Common/F2837xD_DefaultISR.obj" "./Common/F2837xD_Dma.obj" "./Common/F2837xD_ECap.obj" "./Common/F2837xD_EPwm.obj" "./Common/F2837xD_EQep.obj" "./Common/F2837xD_Emif.obj" "./Common/F2837xD_Gpio.obj" "./Common/F2837xD_I2C.obj" "./Common/F2837xD_Ipc.obj" "./Common/F2837xD_Ipc_Driver.obj" "./Common/F2837xD_Ipc_Driver_Lite.obj" "./Common/F2837xD_Ipc_Driver_Util.obj" "./Common/F2837xD_Mcbsp.obj" "./Common/F2837xD_PieCtrl.obj" "./Common/F2837xD_PieVect.obj" "./Common/F2837xD_Sci.obj" "./Common/F2837xD_Spi.obj" "./Common/F2837xD_SysCtrl.obj" "./Common/F2837xD_Upp.obj" "./Common/F2837xD_can.obj" "./Common/F2837xD_sci_io.obj" "./Common/F2837xD_sdfm_drivers.obj" "./Common/F2837xD_struct.obj" "./Common/F2837xD_usDelay.obj" "./Common/device.obj" "./Header/F2837xD_GlobalVariableDefs.obj" "./driverlib/asysctl.obj" "./driverlib/can.obj" "./driverlib/cla.obj" "./driverlib/clb.obj" "./driverlib/cmpss.obj" "./driverlib/cputimer.obj" "./driverlib/dac.obj" "./driverlib/dcsm.obj" "./driverlib/dma.obj" "./driverlib/ecap.obj" "./driverlib/emif.obj" "./driverlib/epwm.obj" "./driverlib/eqep.obj" "./driverlib/flash.obj" "./driverlib/gpio.obj" "./driverlib/hrpwm.obj" "./driverlib/i2c.obj" "./driverlib/interrupt.obj" "./driverlib/mcbsp.obj" "./driverlib/memcfg.obj" "./driverlib/sci.obj" "./driverlib/sdfm.obj" "./driverlib/spi.obj" "./driverlib/sysctl.obj" "./driverlib/upp.obj" "./driverlib/usb.obj" "./driverlib/version.obj" "./driverlib/xbar.obj" "./my_drivers/source/HC_05_Bluetooth.obj" "./my_drivers/source/MPU6050.obj" "../2837xD_RAM_lnk_cpu1.cmd" "../driverlib.lib" "../Header/F2837xD_Headers_nonBIOS_cpu1.cmd" "../driverlib/ccs/Debug/driverlib.lib" "../driverlib/ccs/Debug/driverlib_coff.lib" "../driverlib/ccs/Debug/driverlib_eabi.lib" "../driverlib/ccs/Release/driverlib.lib" "../driverlib/ccs/Release/driverlib_coff.lib" "../driverlib/ccs/Release/driverlib_eabi.lib"  -l"D:/ti/c2000/C2000Ware_3_02_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" -llibc.a 
+<Linking>
+warning #10207-D: resolving index library "driverlib.lib" to "driverlib_coff.lib", but "driverlib_coff.lib" was not found
+warning #10373-D: library "../driverlib/ccs/Debug/driverlib_eabi.lib" contains ELF object files which are incompatible with the TI-COFF output file.  Ensure you are using the proper library.
+warning #10373-D: library "../driverlib/ccs/Release/driverlib_eabi.lib" contains ELF object files which are incompatible with the TI-COFF output file.  Ensure you are using the proper library.
+warning #10373-D: library "../driverlib/ccs/Debug/driverlib_eabi.lib" contains ELF object files which are incompatible with the TI-COFF output file.  Ensure you are using the proper library.
+warning #10373-D: library "../driverlib/ccs/Release/driverlib_eabi.lib" contains ELF object files which are incompatible with the TI-COFF output file.  Ensure you are using the proper library.
+Finished building target: "Design2_Robot.out"
+ 
+
+**** Build Finished ****
