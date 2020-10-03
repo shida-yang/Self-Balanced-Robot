@@ -1,9 +1,0 @@
-#include <F28x_Project.h>
-#include "interrupt.h"
-
-
-void I2C_O2O_Master_Init(Uint16 slaveAddress, float32 sysClkMhz, float32 I2CClkKHz);
-
-static void InitI2CGpio();
-
-static inline void SetClockDivides(float32 sysClkMHz, float32 I2CClkKHz);
