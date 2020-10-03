@@ -65,3 +65,5 @@ Debug/Design2_Robot_linkInfo.xml
 .metadata/*
 *.xml
 .jxbrowser-data/*
+Design2_Robot/.ccsproject
+Design2_Robot/.cproject
