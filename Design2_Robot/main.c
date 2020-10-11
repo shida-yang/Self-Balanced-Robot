@@ -7,6 +7,7 @@
 #include <F28x_Project.h>
 #include "HC_05_Bluetooth.h"
 #include "MPU6050.h"
+#include "A4988.h"
 #include "interrupt.h"
 
 #include "string.h"
@@ -64,22 +65,36 @@ int main(void){
 
     MPU6050_Powerup();
 
+    A4988_INIT();
+
     //enable global interrupt
     Interrupt_enableMaster();
-
+    uint16_t count = 0;
     while(1){
         // testing HC-05
-//         uint8_t i = 0;
-//         for(i=0; i<256; i++){
-//             tostring(data, i);
-//             send_success = HC_05_send_string(data);
-//             if(i%40==0)HC_05_read_string(data2);
-//             DELAY_US(1000);
-//         }
+//        if(count%200==0){
+//            tostring(data, count/200);
+//            send_success = HC_05_send_string(data);
+//            HC_05_read_string(data2);
+//        }
+//
+//        if(data2[0]=='L'){
+//
+//        }
+//
+//        // testing MPU6050
+//        angle = MPU6050_GetPitchAngle();
+//        DELAY_US(5000);
+//
+//        count++;
 
-        // testing MPU6050
-        angle = MPU6050_GetPitchAngle();
-        DELAY_US(5000);
+        step_high(RIGHT);
+        step_high(LEFT);
+        DELAY_US(20);
+        step_low(RIGHT);
+        step_low(LEFT);
+        DELAY_US(500);
+
     }
 
     return 0;

@@ -1,12 +1,12 @@
 #include <F28x_Project.h>
 #include "driverlib.h"
 
-#define LEFT_DIR_PIN        44
-#define LEFT_STEP_PIN       45
-#define RIGHT_DIR_PIN       46
-#define RIGHT_STEP_PIN      47
-#define A4988_ENABLE_PIN    48
-#define A4988_SLEEP_PIN     49
+#define LEFT_DIR_PIN        95
+#define LEFT_STEP_PIN       139
+#define RIGHT_DIR_PIN       56
+#define RIGHT_STEP_PIN      97
+#define A4988_ENABLE_PIN    94
+#define A4988_SLEEP_PIN     65
 
 typedef enum MOTOR_SIDE{
     LEFT,

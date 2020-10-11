@@ -32,7 +32,7 @@ void MPU6050_Powerup(){
     I2C_SendBytes_Polling(RA_ACCEL_CONFIG, &i, 1);
 
     // take initial average readings to get the calibration offset for gyro
-//    MPU6050_Calibrate();
+    MPU6050_Calibrate();
 
 //    MPU6050_ReadAccelGyro_Polling(&last_dp);
 //
@@ -88,10 +88,10 @@ static void MPU6050_Calibrate(){
 }
 
 static float MPU6050_GetAccelAngle(){
-    float adjusted_accel_y_reading = last_dp.accel_y - calibration_dp.accel_y;
-    if(adjusted_accel_y_reading > ACCEL_RES) adjusted_accel_y_reading = ACCEL_RES;
-    if(adjusted_accel_y_reading < -ACCEL_RES) adjusted_accel_y_reading = -ACCEL_RES;
-    return asinf(adjusted_accel_y_reading / ACCEL_RES) * 57.2958; // 360/(2*pi) = 57.2958
+    float adjusted_accel_x_reading = last_dp.accel_x - calibration_dp.accel_x;
+    if(adjusted_accel_x_reading > ACCEL_RES) adjusted_accel_x_reading = ACCEL_RES;
+    if(adjusted_accel_x_reading < -ACCEL_RES) adjusted_accel_x_reading = -ACCEL_RES;
+    return -asinf(adjusted_accel_x_reading / ACCEL_RES) * 57.2958; // 360/(2*pi) = 57.2958
 }
 
 static void I2C_Master_Init(){
@@ -319,10 +319,10 @@ __interrupt void i2caISR(void){
         }
         else{
             // calculate current tile angle
-            float delta_gyro_x_angle = (float)(last_dp.gyro_x - calibration_dp.gyro_x) * TIMER0_PER / GYRO_RES;
+            float delta_gyro_y_angle = (float)(last_dp.gyro_y - calibration_dp.gyro_y) * TIMER0_PER / GYRO_RES;
             float accel_angle = MPU6050_GetAccelAngle();
             float adjusted_gyro_z_reading = last_dp.gyro_z - calibration_dp.gyro_z;
-            current_gyro_angle = (current_gyro_angle + delta_gyro_x_angle + adjusted_gyro_z_reading * 0.0000006) * 0.9990 + (accel_angle) * 0.0010;
+            current_gyro_angle = (current_gyro_angle + delta_gyro_y_angle + adjusted_gyro_z_reading * 0.0000006) * 0.9990 + (accel_angle) * 0.0010;
             update_accel_gyro_i2c_state = IDLEING;
         }
         break;

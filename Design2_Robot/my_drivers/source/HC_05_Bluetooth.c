@@ -124,7 +124,7 @@ __interrupt void HC_05_RX_ISR(void){
     }
 
     // if current byte is NULL, switch to another buffer
-    if(curr_byte == '\0'){
+    if(curr_byte == '\0' || curr_byte == '\n'){
         rx_buf_ready[curr_filling_rx_buf] = 1;
         curr_filling_rx_buf = !curr_filling_rx_buf;
         rx_filling_index = 0;
