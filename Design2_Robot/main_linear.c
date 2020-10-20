@@ -8,19 +8,18 @@
 //#define PID_I   0
 //#define PID_D   0
 
-float PID_P = 400;
-float PID_I = 15;
-float PID_D = 200;
+float PID_P = 15;
+float PID_I = 0;
+float PID_D = 30;
 
 #define A4988_PULSE_ON_US       20
 #define PID_UPDATE_TIME_US      4000
 #define MAIN_LOOP_PERIOD_COUNT  (PID_UPDATE_TIME_US/A4988_PULSE_ON_US)
 
-#define MIN_TIME_BETWEEN_PULSE  200
+#define MIN_TIME_BETWEEN_PULSE  500
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
-float PID_OUT_IGNORE_THRESHOLD = 100;
-float SELF_ADJUST_COEFFICIENT = 0.0001;
+float PID_OUT_IGNORE_THRESHOLD = 5;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -78,69 +77,83 @@ int main(void){
             tile_angle = MPU6050_GetPitchAngle();
 
             // calculate PID output
-            error = tile_angle - balance_angle + angle_stop_adjustment;
+            error = tile_angle - balance_angle;
 //            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
 //                error += pid_out * 0.005 ;
 
             pid_i_accum += PID_I * error;
+            if(pid_i_accum > 400)pid_i_accum = 400;
+            else if(pid_i_accum < -400)pid_i_accum = -400;
 
-            if(pid_out == 0){
-                pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
-                if(fabs(pid_out)<PID_OUT_IGNORE_THRESHOLD){
-                    pid_out=0;
-                }
-                else{
-                    force_update_pulse_target = 1;
-                }
-            }
-            else{
-                pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
-                if(fabs(pid_out)<PID_OUT_IGNORE_THRESHOLD){
-                    pid_out=0;
-                }
-            }
+//            if(pid_out == 0){
+//                pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
+//                if(fabs(pid_out)<PID_OUT_IGNORE_THRESHOLD){
+//                    pid_out=0;
+//                }
+//                else{
+//                    force_update_pulse_target = 1;
+//                }
+//            }
+//            else{
+//                pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
+//                if(fabs(pid_out)<PID_OUT_IGNORE_THRESHOLD){
+//                    pid_out=0;
+//                }
+//            }
+            pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
 
 
 
             // calculate left output
             out_left = pid_out;
+//            if(out_left<-2000) out_left=-1999;
+//            else if(out_left>2000) out_left=1999;
 
             // calculate right output
             out_right = pid_out;
 
             // calculate left pulses
-            left_pulse = 500000 / A4988_PULSE_ON_US / out_left;
+//            left_pulse = 100000 / A4988_PULSE_ON_US / out_left;
+            if(out_left>0){
+                left_pulse = 400 - (405 - (1/(out_left + 9)) * 5500);
+            }
+            else if(out_left<0){
+                left_pulse = -400 - (-405 - (1/(out_left - 9)) * 5500);
+            }
+            else{
+                left_pulse = 0;
+            }
 
             // calculate right pulses
             right_pulse = 100000 / A4988_PULSE_ON_US / out_right;
 
-            if(force_update_pulse_target){
-                force_update_pulse_target = 0;
-                if(left_pulse < 0){
-                    set_dir(LEFT, BACKWARD);
-                    set_dir(RIGHT, BACKWARD);
-                    left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-                    right_pulse_target = left_pulse_target;
-                }
-                else{
-                    set_dir(LEFT, FORWARD);
-                    set_dir(RIGHT, FORWARD);
-                    left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-                    right_pulse_target = left_pulse_target;
-                }
-
-//                if(right_pulse < 0){
-//                    right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//            if(force_update_pulse_target){
+//                force_update_pulse_target = 0;
+//                if(left_pulse < 0){
+//                    set_dir(LEFT, BACKWARD);
+//                    set_dir(RIGHT, BACKWARD);
+//                    left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//                    right_pulse_target = left_pulse_target;
 //                }
 //                else{
-//                    right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//                    set_dir(LEFT, FORWARD);
+//                    left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//                    set_dir(RIGHT, FORWARD);
+//                    right_pulse_target = left_pulse_target;
 //                }
-            }
+//
+////                if(right_pulse < 0){
+////                    right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+////                }
+////                else{
+////                    right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+////                }
+//            }
 
             last_error = error;
 
-            if(pid_out!=0)
-                angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+//            if(pid_out!=0)
+//                angle_stop_adjustment -= fabs(pid_out)/pid_out*0.004;
 
             main_loop_flag = 0;
         }
@@ -180,13 +193,15 @@ __interrupt void cpuTimer1ISR(void){
         if(left_pulse < 0){
             set_dir(LEFT, BACKWARD);
             set_dir(RIGHT, BACKWARD);
-            left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//            left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+            left_pulse_target = -left_pulse;
             right_pulse_target = left_pulse_target;
         }
         else{
             set_dir(LEFT, FORWARD);
-            left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//            left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
             set_dir(RIGHT, FORWARD);
+            left_pulse_target = left_pulse;
             right_pulse_target = left_pulse_target;
         }
     }
