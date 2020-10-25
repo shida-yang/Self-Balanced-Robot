@@ -20,7 +20,9 @@ float PID_D = 200;
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
 float PID_OUT_IGNORE_THRESHOLD = 100;
-float SELF_ADJUST_COEFFICIENT = 0.0001;
+float SELF_ADJUST_COEFFICIENT = 0;
+float PID_I_ACCUM_CAP = 350;
+float BRAKE_COEFFICIENT = 0;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -80,9 +82,11 @@ int main(void){
             // calculate PID output
             error = tile_angle - balance_angle + angle_stop_adjustment;
 //            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
-//                error += pid_out * 0.005 ;
+                error += pid_out * BRAKE_COEFFICIENT ;
 
             pid_i_accum += PID_I * error;
+            if(pid_i_accum>PID_I_ACCUM_CAP) pid_i_accum = PID_I_ACCUM_CAP;
+            else if(pid_i_accum<-PID_I_ACCUM_CAP) pid_i_accum = -PID_I_ACCUM_CAP;
 
             if(pid_out == 0){
                 pid_out = PID_P * error + pid_i_accum + PID_D * (error - last_error);
