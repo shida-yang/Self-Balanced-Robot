@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         JS.setOnMoveListener(OnMoveListener { angle, strength ->
             ANGLE_TEXT_VIEW.text = "Angle: $angle"
             FORCE_TEXT_VIEW.text = "Force: $strength"
-            my_bt_connection_service.write("($angle,$strength)\0".toByteArray())
+            my_bt_connection_service.write("($angle,$strength)".toByteArray())
         })
 
     }
