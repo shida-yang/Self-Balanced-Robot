@@ -14,6 +14,8 @@
 #define RX_BUF_LEN 32
 #define TX_BUF_LEN 32
 
+#define RX_TERM_CHAR    ')'
+
 void HC_05_init();
 bool HC_05_read_string(char* data_str);
 bool HC_05_send_string(char* data_str);

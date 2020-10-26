@@ -15,6 +15,8 @@ float PID_D = 200;
 #define A4988_PULSE_ON_US       20
 #define PID_UPDATE_TIME_US      4000
 #define MAIN_LOOP_PERIOD_COUNT  (PID_UPDATE_TIME_US/A4988_PULSE_ON_US)
+#define tilt_ANGLE_BT_UPDATE_TIME_US    500000
+#define tilt_ANGLE_BT_UPDATE_COUNT      (tilt_ANGLE_BT_UPDATE_TIME_US/A4988_PULSE_ON_US)
 
 #define MIN_TIME_BETWEEN_PULSE  200
 //#define PID_OUT_IGNORE_THRESHOLD    1
@@ -26,14 +28,18 @@ float BRAKE_COEFFICIENT = 0;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
+int inttostring(char str[], int num);
+
+char BT_SEND_BUF[32];
+char BT_RECEIVE_BUF[32];
 
 float pid_i_accum, pid_out, out_left, out_right;
-float tile_angle, balance_angle, angle_stop_adjustment, error, last_error;
+float tilt_angle, balance_angle, angle_stop_adjustment, error, last_error;
 int32_t left_pulse, left_pulse_count, left_pulse_target,
         right_pulse, right_pulse_count, right_pulse_target;
 
 uint32_t system_counter;
-bool main_loop_flag, force_update_pulse_target;
+bool main_loop_flag, force_update_pulse_target, bt_send_tilt_angle_flag;
 
 int main(void){
 
@@ -73,14 +79,15 @@ int main(void){
 
     main_loop_flag = 1;
     force_update_pulse_target = 0;
+    bt_send_tilt_angle_flag = 0;
 
     while(1){
         if(main_loop_flag){
-            // get current tile angle
-            tile_angle = MPU6050_GetPitchAngle();
+            // get current tilt angle
+            tilt_angle = MPU6050_GetPitchAngle();
 
             // calculate PID output
-            error = tile_angle - balance_angle + angle_stop_adjustment;
+            error = tilt_angle - balance_angle + angle_stop_adjustment;
 //            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
@@ -149,6 +156,41 @@ int main(void){
             main_loop_flag = 0;
         }
 
+        if(bt_send_tilt_angle_flag){
+            float temp_tilt_angle = tilt_angle;
+            char sign;
+            // get sign
+            if(temp_tilt_angle < 0){
+                sign = '-';
+                temp_tilt_angle = -temp_tilt_angle;
+            }
+            else{
+                sign = ' ';
+            }
+            // get int part
+            uint16_t int_part = (uint16_t)temp_tilt_angle;
+            // get decimal part
+            uint16_t decimal_part = (uint16_t)((temp_tilt_angle - (float)int_part)*1000);
+            uint16_t pos = 0;
+            BT_SEND_BUF[0] = sign;
+            pos++;
+            pos += inttostring(&BT_SEND_BUF[pos], int_part);
+            BT_SEND_BUF[pos] = '.';
+            pos++;
+            if(decimal_part < 100){
+                BT_SEND_BUF[pos] = '0';
+                pos++;
+            }
+            if(decimal_part < 10){
+                BT_SEND_BUF[pos] = '0';
+                pos++;
+            }
+            pos += inttostring(&BT_SEND_BUF[pos], decimal_part);
+            BT_SEND_BUF[pos] = '\0';
+            HC_05_send_string(BT_SEND_BUF);
+            bt_send_tilt_angle_flag = 0;
+        }
+
     }
 
     return 0;
@@ -174,6 +216,10 @@ __interrupt void cpuTimer1ISR(void){
     system_counter ++;
     if(system_counter % MAIN_LOOP_PERIOD_COUNT == 0){
         main_loop_flag = 1;
+    }
+
+    if(system_counter % tilt_ANGLE_BT_UPDATE_COUNT == 0){
+        bt_send_tilt_angle_flag = 1;
     }
 
     // handle left pulses
@@ -227,3 +273,26 @@ __interrupt void cpuTimer1ISR(void){
 //    right_pulse_count ++;
 }
 
+int inttostring(char str[], int num)
+{
+    int i, rem, len = 0, n;
+
+    if(num == 0){
+        str[0] = '0';
+        return 1;
+    }
+
+    n = num;
+    while (n != 0)
+    {
+        len++;
+        n /= 10;
+    }
+    for (i = 0; i < len; i++)
+    {
+        rem = num % 10;
+        num = num / 10;
+        str[len - (i + 1)] = rem + '0';
+    }
+    return len;
+}

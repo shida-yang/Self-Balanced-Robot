@@ -121,10 +121,15 @@ __interrupt void HC_05_RX_ISR(void){
     else{
         filling_rx_buf[rx_filling_index] = curr_byte;
         rx_filling_index++;
+        if(curr_byte == RX_TERM_CHAR){
+            filling_rx_buf[rx_filling_index] = '\0';
+            rx_filling_index++;
+        }
+
     }
 
     // if current byte is NULL, switch to another buffer
-    if(curr_byte == '\0' || curr_byte == '\n'){
+    if(curr_byte == '\0' || curr_byte == RX_TERM_CHAR){
         rx_buf_ready[curr_filling_rx_buf] = 1;
         curr_filling_rx_buf = !curr_filling_rx_buf;
         rx_filling_index = 0;

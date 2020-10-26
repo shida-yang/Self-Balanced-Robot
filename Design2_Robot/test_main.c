@@ -72,11 +72,11 @@ int main(void){
     uint16_t count = 0;
     while(1){
         // testing HC-05
-//        if(count%200==0){
-//            tostring(data, count/200);
-//            send_success = HC_05_send_string(data);
-//            HC_05_read_string(data2);
-//        }
+        if(count%200==0){
+            tostring(data, count/200);
+            send_success = HC_05_send_string(data);
+            HC_05_read_string(data2);
+        }
 //
 //        if(data2[0]=='L'){
 //
@@ -86,7 +86,7 @@ int main(void){
 //        angle = MPU6050_GetPitchAngle();
 //        DELAY_US(5000);
 //
-//        count++;
+        count++;
 
         step_high(RIGHT);
         step_high(LEFT);
