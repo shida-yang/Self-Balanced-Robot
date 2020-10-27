@@ -14,6 +14,7 @@ import io.github.controlwear.virtual.joystick.android.JoystickView.OnMoveListene
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import java.io.IOException
+import java.lang.NumberFormatException
 import java.util.*
 
 
@@ -23,7 +24,8 @@ class MainActivity : AppCompatActivity() {
     var bluetooth_adapter: BluetoothAdapter? = null
     var bluetooth_socket: BluetoothSocket? = null
 
-    val buffer: ByteArray = ByteArray(32)
+    val buffer: ByteArray = ByteArray(1024)
+    var buf_pos: Int = 0
 
     val BT_MAC_ADDR: String = "98:D3:B1:FD:87:48"
     val MY_UUID: String = "00001101-0000-1000-8000-00805F9B34FB"
@@ -83,14 +85,31 @@ class MainActivity : AppCompatActivity() {
     private val mHandler = object : Handler(){
         override fun handleMessage(msg: Message) {
             if (msg.what == MESSAGE_READ){
-                val buffer: ByteArray = msg.obj as ByteArray
-                TILE_ANGLE_TEXT_VIEW.text = String(buffer, 0, msg.arg1)
+                val temp_buffer: ByteArray = msg.obj as ByteArray
+                val len = msg.arg1
+                for (i in 0 until len){
+                    buffer[buf_pos] = temp_buffer[i];
+                    buf_pos++
+                    if(temp_buffer[i].compareTo(0) == 0) {
+                        val temp_string = String(buffer, 0, buf_pos)
+                        TILE_ANGLE_TEXT_VIEW.text = temp_string
+                        buf_pos = 0
+                    }
+                }
+//                val temp_string = String(buffer, 0, msg.arg1)
+//                try {
+//                    val temp_float = temp_string.toFloat()
+//                    TILE_ANGLE_TEXT_VIEW.text = temp_string
+//                }catch(e: NumberFormatException){
+//                    e.printStackTrace()
+//                }
             }
             else if(msg.what == MESSAGE_TOAST){
                 bt_connected = false
                 BT_STATUS_TEXT_VIEW.setTextColor(Color.parseColor("#FF0000"))
                 BT_STATUS_TEXT_VIEW.text = "BT Not Connected"
                 bluetooth_socket!!.close()
+                my_bt_connection_service.cancel()
             }
         }
     }

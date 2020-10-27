@@ -35,11 +35,15 @@ class BluetoothConnectionService(
         mConnectedThread.start()
     }
 
+    fun cancel(){
+        mConnectedThread.cancel()
+    }
+
     private inner class ConnectedThread(private val mmSocket: BluetoothSocket) : Thread() {
 
         private val mmInStream: InputStream = mmSocket.inputStream
         private val mmOutStream: OutputStream = mmSocket.outputStream
-        private val mmBuffer: ByteArray = ByteArray(32) // mmBuffer store for the stream
+        private val mmBuffer: ByteArray = ByteArray(1024) // mmBuffer store for the stream
 
         override fun run() {
             var numBytes: Int // bytes returned from read()
@@ -55,9 +59,10 @@ class BluetoothConnectionService(
                 }
 
                 // Send the obtained bytes to the UI activity.
+                val temp_buffer = mmBuffer.clone()
                 val readMsg = handler.obtainMessage(
                     MESSAGE_READ, numBytes, -1,
-                    mmBuffer)
+                    temp_buffer)
                 readMsg.sendToTarget()
             }
         }
