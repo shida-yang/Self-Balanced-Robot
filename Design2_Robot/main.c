@@ -45,11 +45,6 @@ float js_x = 0, js_y = 0;
 uint32_t system_counter;
 bool main_loop_flag, force_update_pulse_target, bt_send_tilt_angle_flag;
 
-float self_balance_p = 0;
-float self_balance_i = 0;
-float self_balance_d = 0;
-float last_pid_out = 0;
-
 int main(void){
 
     //init system clocks and get board speed running at 200 MHz
