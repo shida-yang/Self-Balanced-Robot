@@ -23,7 +23,7 @@ float PID_D = 100;
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
 float PID_OUT_IGNORE_THRESHOLD = 100;
-float SELF_ADJUST_COEFFICIENT = 0;
+//float SELF_ADJUST_COEFFICIENT = 0;
 float PID_I_ACCUM_CAP = 350;
 float BRAKE_COEFFICIENT = 0;
 
@@ -47,6 +47,8 @@ bool main_loop_flag, force_update_pulse_target, bt_send_tilt_angle_flag;
 
 float self_balance_p = 0;
 float self_balance_i = 0;
+float self_balance_i_accum = 0;
+float self_balance_i_accum_cap = 3;
 float self_balance_d = 0;
 float last_pid_out = 0;
 
@@ -96,7 +98,7 @@ int main(void){
             tilt_angle = MPU6050_GetPitchAngle();
 
             // calculate PID output
-            error = tilt_angle - (balance_angle + angle_stop_adjustment);
+            error = tilt_angle - (balance_angle - angle_stop_adjustment);
 //            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
@@ -162,16 +164,33 @@ int main(void){
                 }
             }
 
-            last_error = error;
-
-            if(pid_out!=0)
-                angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+            if(balance_angle == 0){
+                if(pid_out!=0){
+                    self_balance_i_accum += pid_out * self_balance_i;
+                    if(self_balance_i_accum > self_balance_i_accum_cap){
+                        self_balance_i_accum = self_balance_i_accum_cap;
+                    }
+                    if(self_balance_i_accum < -self_balance_i_accum_cap){
+                        self_balance_i_accum = -self_balance_i_accum_cap;
+                    }
+                    angle_stop_adjustment = pid_out * self_balance_p + self_balance_i_accum + (pid_out-last_pid_out) * self_balance_d;
+                    if(angle_stop_adjustment > self_balance_i_accum_cap){
+                        angle_stop_adjustment = self_balance_i_accum_cap;
+                    }
+                    if(angle_stop_adjustment < -self_balance_i_accum_cap){
+                        angle_stop_adjustment = -self_balance_i_accum_cap;
+                    }
+                }
+            }
 
             // update JS value
             HC_05_read_string(BT_RECEIVE_BUF);
             parse_js_values();
 
             main_loop_flag = 0;
+
+            last_error = error;
+            last_pid_out = pid_out;
         }
 
         if(bt_send_tilt_angle_flag){
