@@ -9,8 +9,8 @@
 //#define PID_D   0
 
 float PID_P = 400;
-float PID_I = 15;
-float PID_D = 200;
+float PID_I = 2;
+float PID_D = 100;
 
 #define A4988_PULSE_ON_US       20
 #define PID_UPDATE_TIME_US      4000
@@ -18,7 +18,8 @@ float PID_D = 200;
 #define tilt_ANGLE_BT_UPDATE_TIME_US    500000
 #define tilt_ANGLE_BT_UPDATE_COUNT      (tilt_ANGLE_BT_UPDATE_TIME_US/A4988_PULSE_ON_US)
 
-#define MIN_TIME_BETWEEN_PULSE  200
+#define MIN_TIME_BETWEEN_PULSE  300
+#define MAX_PID_OUT     (500000/A4988_PULSE_ON_US/(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US))
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
 float PID_OUT_IGNORE_THRESHOLD = 100;
@@ -39,10 +40,15 @@ float pid_i_accum, pid_out, out_left, out_right;
 float tilt_angle, balance_angle, angle_stop_adjustment, error, last_error;
 int32_t left_pulse, left_pulse_count, left_pulse_target,
         right_pulse, right_pulse_count, right_pulse_target;
-float js_angle = 0, js_force = 0;
+float js_x = 0, js_y = 0;
 
 uint32_t system_counter;
 bool main_loop_flag, force_update_pulse_target, bt_send_tilt_angle_flag;
+
+float self_balance_p = 0;
+float self_balance_i = 0;
+float self_balance_d = 0;
+float last_pid_out = 0;
 
 int main(void){
 
@@ -90,7 +96,7 @@ int main(void){
             tilt_angle = MPU6050_GetPitchAngle();
 
             // calculate PID output
-            error = tilt_angle - balance_angle + angle_stop_adjustment;
+            error = tilt_angle - (balance_angle + angle_stop_adjustment);
 //            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
@@ -114,6 +120,13 @@ int main(void){
                 }
             }
 
+            if(pid_out > MAX_PID_OUT){
+                pid_out = MAX_PID_OUT;
+            }
+            if(pid_out < -MAX_PID_OUT){
+                pid_out = -MAX_PID_OUT;
+            }
+
 
 
             // calculate left output
@@ -126,29 +139,27 @@ int main(void){
             left_pulse = 500000 / A4988_PULSE_ON_US / out_left;
 
             // calculate right pulses
-            right_pulse = 100000 / A4988_PULSE_ON_US / out_right;
+            right_pulse = 500000 / A4988_PULSE_ON_US / out_right;
 
             if(force_update_pulse_target){
                 force_update_pulse_target = 0;
                 if(left_pulse < 0){
                     set_dir(LEFT, BACKWARD);
-                    set_dir(RIGHT, BACKWARD);
                     left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-                    right_pulse_target = left_pulse_target;
                 }
                 else{
                     set_dir(LEFT, FORWARD);
-                    set_dir(RIGHT, FORWARD);
                     left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-                    right_pulse_target = left_pulse_target;
                 }
 
-//                if(right_pulse < 0){
-//                    right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-//                }
-//                else{
-//                    right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-//                }
+                if(right_pulse < 0){
+                    set_dir(RIGHT, BACKWARD);
+                    right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+                }
+                else{
+                    set_dir(RIGHT, FORWARD);
+                    right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+                }
             }
 
             last_error = error;
@@ -238,13 +249,11 @@ __interrupt void cpuTimer1ISR(void){
             set_dir(LEFT, BACKWARD);
             set_dir(RIGHT, BACKWARD);
             left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-            right_pulse_target = left_pulse_target;
         }
         else{
             set_dir(LEFT, FORWARD);
-            left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
             set_dir(RIGHT, FORWARD);
-            right_pulse_target = left_pulse_target;
+            left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
         }
     }
     else if(left_pulse_count == 1){
@@ -306,9 +315,9 @@ int inttostring(char str[], int num)
 
 bool parse_js_values(){
     int i=0;
-    bool parsing_angle = 1;
+    bool parsing_x = 1;
 
-    float temp_angle = 0, temp_force = 0;
+    float temp_x = 0, temp_y = 0;
 
     // check starting parenthesis
     if(BT_RECEIVE_BUF[i] != '('){
@@ -321,12 +330,12 @@ bool parse_js_values(){
         switch(BT_RECEIVE_BUF[i]){
         case ')':
             // no ',' met, wrong format
-            if(parsing_angle){
+            if(parsing_x){
                 return false;
             }
             break;
         case ',':
-            parsing_angle = 0;
+            parsing_x = 0;
             break;
         case '0':
         case '1':
@@ -338,11 +347,11 @@ bool parse_js_values(){
         case '7':
         case '8':
         case '9':
-            if(parsing_angle){
-                temp_angle = temp_angle * 10 + (BT_RECEIVE_BUF[i] - '0');
+            if(parsing_x){
+                temp_x = temp_x * 10 + (BT_RECEIVE_BUF[i] - '0');
             }
             else{
-                temp_force = temp_force * 10 + (BT_RECEIVE_BUF[i] - '0');
+                temp_y = temp_y * 10 + (BT_RECEIVE_BUF[i] - '0');
             }
             break;
         // invalid char
@@ -353,11 +362,11 @@ bool parse_js_values(){
     }
 
     // value out of range
-    if(temp_angle > 359 || temp_angle <0 || temp_force > 100 || temp_force < 0){
+    if(temp_x > 255 || temp_x <0 || temp_y > 255 || temp_y < 0){
         return false;
     }
 
-    js_angle = temp_angle;
-    js_force = temp_force;
+    js_x = temp_x;
+    js_y = temp_y;
     return true;
 }

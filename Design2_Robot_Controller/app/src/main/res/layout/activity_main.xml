@@ -56,22 +56,22 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/ANGLE_TEXT_VIEW"
+        android:id="@+id/X_TEXT_VIEW"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Angle: 0"
+        android:text="X: 0"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/JS"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/FORCE_TEXT_VIEW"
+        android:id="@+id/Y_TEXT_VIEW"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Force: 0"
+        android:text="Y: 0"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/JS"
-        app:layout_constraintTop_toBottomOf="@+id/ANGLE_TEXT_VIEW" />
+        app:layout_constraintTop_toBottomOf="@+id/X_TEXT_VIEW" />
 
     <TextView
         android:id="@+id/BT_STATUS_TEXT_VIEW"

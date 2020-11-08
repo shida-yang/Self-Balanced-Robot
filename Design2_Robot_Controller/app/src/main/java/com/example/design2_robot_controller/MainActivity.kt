@@ -14,6 +14,7 @@ import io.github.controlwear.virtual.joystick.android.JoystickView.OnMoveListene
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.toast
 import java.io.IOException
+import java.lang.Math.*
 import java.lang.NumberFormatException
 import java.util.*
 
@@ -73,10 +74,15 @@ class MainActivity : AppCompatActivity() {
 
 
         JS.setOnMoveListener(OnMoveListener { angle, strength ->
-            ANGLE_TEXT_VIEW.text = "Angle: $angle"
-            FORCE_TEXT_VIEW.text = "Force: $strength"
+
+            val x_value = (strength.toDouble() * cos(angle.toDouble()/180* PI) /100*255).toInt()
+            val y_value = (strength.toDouble() * sin(angle.toDouble()/180* PI) /100*255).toInt()
+
+            X_TEXT_VIEW.text = "X: $x_value"
+            Y_TEXT_VIEW.text = "Y: $y_value"
+
             if(bt_connected) {
-                my_bt_connection_service.write("($angle,$strength)".toByteArray())
+                my_bt_connection_service.write("($x_value,$y_value)".toByteArray())
             }
         })
 
@@ -96,13 +102,6 @@ class MainActivity : AppCompatActivity() {
                         buf_pos = 0
                     }
                 }
-//                val temp_string = String(buffer, 0, msg.arg1)
-//                try {
-//                    val temp_float = temp_string.toFloat()
-//                    TILE_ANGLE_TEXT_VIEW.text = temp_string
-//                }catch(e: NumberFormatException){
-//                    e.printStackTrace()
-//                }
             }
             else if(msg.what == MESSAGE_TOAST){
                 bt_connected = false
