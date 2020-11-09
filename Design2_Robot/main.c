@@ -22,10 +22,12 @@ float PID_D = 100;
 #define MAX_PID_OUT     (500000/A4988_PULSE_ON_US/(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US))
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
+float F_B_TILE_ANGLE = 0.5, angle_inc = 0.005;
+
 float PID_OUT_IGNORE_THRESHOLD = 100;
 float SELF_ADJUST_COEFFICIENT = 0;
 float PID_I_ACCUM_CAP = 350;
-float BRAKE_COEFFICIENT = 0;
+float BRAKE_COEFFICIENT = 0.00015;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -92,7 +94,7 @@ int main(void){
 
             // calculate PID output
             error = tilt_angle - (balance_angle + angle_stop_adjustment);
-//            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD+10))
+            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*2))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
             pid_i_accum += PID_I * error;
@@ -165,6 +167,20 @@ int main(void){
             // update JS value
             HC_05_read_string(BT_RECEIVE_BUF);
             parse_js_values();
+
+            if(js_y > 0){
+                balance_angle += angle_inc;
+                if(balance_angle > F_B_TILE_ANGLE) balance_angle = F_B_TILE_ANGLE;
+            }
+            else if(js_y < 0){
+                balance_angle -= angle_inc;
+                if(balance_angle < -F_B_TILE_ANGLE) balance_angle = -F_B_TILE_ANGLE;
+            }
+            else{
+                if(fabs(balance_angle) < angle_inc) balance_angle = 0;
+                else if(balance_angle > 0) balance_angle -= angle_inc;
+                else if(balance_angle < 0) balance_angle += angle_inc;
+            }
 
             main_loop_flag = 0;
         }
@@ -310,7 +326,7 @@ int inttostring(char str[], int num)
 
 bool parse_js_values(){
     int i=0;
-    bool parsing_x = 1;
+    bool parsing_x = 1, neg_x = 0, neg_y = 0;
 
     float temp_x = 0, temp_y = 0;
 
@@ -349,6 +365,14 @@ bool parse_js_values(){
                 temp_y = temp_y * 10 + (BT_RECEIVE_BUF[i] - '0');
             }
             break;
+        case '-':
+            if(parsing_x){
+                neg_x = 1;
+            }
+            else{
+                neg_y = 1;
+            }
+            break;
         // invalid char
         default:
             return false;
@@ -361,7 +385,7 @@ bool parse_js_values(){
         return false;
     }
 
-    js_x = temp_x;
-    js_y = temp_y;
+    js_x = neg_x?-temp_x:temp_x;
+    js_y = neg_y?-temp_y:temp_y;
     return true;
 }
