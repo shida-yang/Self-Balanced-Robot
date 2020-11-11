@@ -3,6 +3,7 @@
 #include "MPU6050.h"
 #include "A4988.h"
 #include "interrupt.h"
+#include "myAdc.h"
 
 //#define PID_P   70
 //#define PID_I   0
@@ -17,6 +18,8 @@ float PID_D = 100;
 #define MAIN_LOOP_PERIOD_COUNT  (PID_UPDATE_TIME_US/A4988_PULSE_ON_US)
 #define tilt_ANGLE_BT_UPDATE_TIME_US    500000
 #define tilt_ANGLE_BT_UPDATE_COUNT      (tilt_ANGLE_BT_UPDATE_TIME_US/A4988_PULSE_ON_US)
+#define BATT_VOLTAGE_UPDATE_TIME_US     1000000
+#define BATT_VOLTAGE_UPDATE_TIME_COUNT  (BATT_VOLTAGE_UPDATE_TIME_US/A4988_PULSE_ON_US)
 
 #define MIN_TIME_BETWEEN_PULSE  300
 #define MAX_PID_OUT     (500000/A4988_PULSE_ON_US/(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US))
@@ -31,6 +34,7 @@ float BRAKE_COEFFICIENT = 0.00015;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
+__interrupt void batteryAdcISR(void);
 
 int inttostring(char str[], int num);
 bool parse_js_values();
@@ -43,6 +47,8 @@ float tilt_angle, balance_angle, angle_stop_adjustment, error, last_error;
 int32_t left_pulse, left_pulse_count, left_pulse_target,
         right_pulse, right_pulse_count, right_pulse_target;
 float js_x = 0, js_y = 0;
+float batt_voltage = 0;
+bool new_batt_voltage = 0;
 
 uint32_t system_counter;
 bool main_loop_flag, force_update_pulse_target, bt_send_tilt_angle_flag;
@@ -64,6 +70,13 @@ int main(void){
     HC_05_init();
     MPU6050_Powerup();
     A4988_INIT();
+
+    initAdc(ADCA_BASE, ADC_CLK_DIV_4_0,  ADC_RESOLUTION_12BIT,
+                ADC_MODE_SINGLE_ENDED);
+    initAdcSoc(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
+                   ADC_CH_ADCIN1, 50, ADC_INT_NUMBER1);
+    Interrupt_register(INT_ADCA1, &batteryAdcISR);
+
 
     //enable global interrupt
     Interrupt_enableMaster();
@@ -201,7 +214,11 @@ int main(void){
             // get decimal part
             uint16_t decimal_part = (uint16_t)((temp_tilt_angle - (float)int_part)*1000);
             uint16_t pos = 0;
-            BT_SEND_BUF[0] = sign;
+            BT_SEND_BUF[pos] = 'T';
+            pos++;
+            BT_SEND_BUF[pos] = 'A';
+            pos++;
+            BT_SEND_BUF[pos] = sign;
             pos++;
             pos += inttostring(&BT_SEND_BUF[pos], int_part);
             BT_SEND_BUF[pos] = '.';
@@ -218,6 +235,30 @@ int main(void){
             BT_SEND_BUF[pos] = '\0';
             HC_05_send_string(BT_SEND_BUF);
             bt_send_tilt_angle_flag = 0;
+        }
+
+        if(new_batt_voltage){
+            float temp_batt_voltage = batt_voltage;
+            // get int part
+            uint16_t int_part = (uint16_t)temp_batt_voltage;
+            // get decimal part
+            uint16_t decimal_part = (uint16_t)((temp_batt_voltage - (float)int_part)*100);
+            uint16_t pos = 0;
+            BT_SEND_BUF[pos] = 'B';
+            pos++;
+            BT_SEND_BUF[pos] = 'V';
+            pos++;
+            pos += inttostring(&BT_SEND_BUF[pos], int_part);
+            BT_SEND_BUF[pos] = '.';
+            pos++;
+            if(decimal_part < 10){
+                BT_SEND_BUF[pos] = '0';
+                pos++;
+            }
+            pos += inttostring(&BT_SEND_BUF[pos], decimal_part);
+            BT_SEND_BUF[pos] = '\0';
+            HC_05_send_string(BT_SEND_BUF);
+            new_batt_voltage = 0;
         }
 
     }
@@ -249,6 +290,10 @@ __interrupt void cpuTimer1ISR(void){
 
     if(system_counter % tilt_ANGLE_BT_UPDATE_COUNT == 0){
         bt_send_tilt_angle_flag = 1;
+    }
+
+    if(system_counter % BATT_VOLTAGE_UPDATE_TIME_COUNT == 0){
+        AdcaRegs.ADCSOCFRC1.bit.SOC0 = 1;
     }
 
     // handle left pulses
@@ -298,6 +343,30 @@ __interrupt void cpuTimer1ISR(void){
 //        step_low(RIGHT);
 //    }
 //    right_pulse_count ++;
+}
+
+
+/*
+ * Battery voltage ----- R1 ----- (ADC pin) ----- R2 ----- GND
+ */
+__interrupt void batteryAdcISR(void){
+    //voltage divider resistor values
+    float R1_VAL_K = 1000;
+    float R2_VAL_K = 220;
+    //high reference voltage
+    float VREFH=3.0;
+
+    //read ADC result
+    Uint16 adc_raw_result=ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0);
+
+    // calculate battery voltage
+    float ADC_pin_voltage = (adc_raw_result/4096.0)*VREFH;
+    batt_voltage = ADC_pin_voltage / (R2_VAL_K/(R1_VAL_K + R2_VAL_K));
+    new_batt_voltage = 1;
+
+    // Clear the interrupt flag and issue ACK
+    ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
 
 int inttostring(char str[], int num)
@@ -389,3 +458,5 @@ bool parse_js_values(){
     js_y = neg_y?-temp_y:temp_y;
     return true;
 }
+
+
