@@ -98,7 +98,28 @@ class MainActivity : AppCompatActivity() {
                     buf_pos++
                     if(temp_buffer[i].compareTo(0) == 0) {
                         val temp_string = String(buffer, 0, buf_pos)
-                        TILE_ANGLE_TEXT_VIEW.text = temp_string
+
+                        // current string is tile angle
+                        if(temp_string.startsWith("TA", ignoreCase = false)){
+                            TILE_ANGLE_TEXT_VIEW.text = temp_string.substring(2);
+                        }
+                        // current string is battery voltage
+                        else if(temp_string.startsWith("BV", ignoreCase = false)){
+                            BATT_LEVEL_TEXT_VIEW.text = temp_string.substring(2);
+                            // healthy battery level (green)
+                            if(temp_string.substring(2).toDouble() > 11.4){
+                                BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#00FF00"))
+                            }
+                            // need to charge soon (yellow)
+                            else if(temp_string.substring(2).toDouble() <= 11.4 && temp_string.substring(2).toDouble() > 11.1){
+                                BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#FFFF00"))
+                            }
+                            // need to charge now (red)
+                            else if(temp_string.substring(2).toDouble() <= 11.1){
+                                BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#FF0000"))
+                            }
+                        }
+
                         buf_pos = 0
                     }
                 }
