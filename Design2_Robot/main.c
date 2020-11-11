@@ -76,6 +76,7 @@ int main(void){
     initAdcSoc(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                    ADC_CH_ADCIN1, 50, ADC_INT_NUMBER1);
     Interrupt_register(INT_ADCA1, &batteryAdcISR);
+    Interrupt_enable(INT_ADCA1);
 
 
     //enable global interrupt
