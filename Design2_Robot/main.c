@@ -9,9 +9,9 @@
 //#define PID_I   0
 //#define PID_D   0
 
-float PID_P = 400;
-float PID_I = 2;
-float PID_D = 100;
+float PID_P = 300;
+float PID_I = 20;
+float PID_D = 50;
 
 #define A4988_PULSE_ON_US       20
 #define PID_UPDATE_TIME_US      4000
@@ -28,9 +28,10 @@ float PID_D = 100;
 float F_B_TILE_ANGLE = 0.5, angle_inc = 0.005;
 
 float PID_OUT_IGNORE_THRESHOLD = 100;
-float SELF_ADJUST_COEFFICIENT = 0;
-float PID_I_ACCUM_CAP = 350;
-float BRAKE_COEFFICIENT = 0.00015;
+float SELF_ADJUST_COEFFICIENT = 0.0005;
+float PID_I_ACCUM_CAP = 1000;
+//float BRAKE_COEFFICIENT = 0.00015;
+float BRAKE_COEFFICIENT = 0;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -108,7 +109,7 @@ int main(void){
 
             // calculate PID output
             error = tilt_angle - (balance_angle + angle_stop_adjustment);
-            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*2))
+            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*4))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
             pid_i_accum += PID_I * error;
@@ -175,8 +176,9 @@ int main(void){
 
             last_error = error;
 
-            if(pid_out!=0)
+            if(fabs(pid_out)<300 && balance_angle==0)
                 angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+//                angle_stop_adjustment -= fabs(pid_out)/pid_out*fabs(pid_out)*SELF_ADJUST_COEFFICIENT;
 
             // update JS value
             HC_05_read_string(BT_RECEIVE_BUF);
