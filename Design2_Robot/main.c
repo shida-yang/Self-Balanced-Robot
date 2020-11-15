@@ -25,13 +25,15 @@ float PID_D = 50;
 #define MAX_PID_OUT     (500000/A4988_PULSE_ON_US/(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US))
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
-float F_B_TILE_ANGLE = 0.5, angle_inc = 0.005;
+float F_B_TILE_ANGLE = 1, angle_inc = 0.005;
 
-float PID_OUT_IGNORE_THRESHOLD = 100;
-float SELF_ADJUST_COEFFICIENT = 0.0005;
+float PID_OUT_IGNORE_THRESHOLD = 150;
+float SELF_ADJUST_COEFFICIENT = 0.0015;
 float PID_I_ACCUM_CAP = 1000;
-//float BRAKE_COEFFICIENT = 0.00015;
-float BRAKE_COEFFICIENT = 0;
+float BRAKE_COEFFICIENT = 0.00015;
+
+float last_pid_out=0;
+float SELF_ADJUST_COEFFICIENT_D = 0.0015;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -109,7 +111,7 @@ int main(void){
 
             // calculate PID output
             error = tilt_angle - (balance_angle + angle_stop_adjustment);
-            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*4))
+            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*2.5))
                 error += pid_out * BRAKE_COEFFICIENT ;
 
             pid_i_accum += PID_I * error;
@@ -176,9 +178,24 @@ int main(void){
 
             last_error = error;
 
-            if(fabs(pid_out)<300 && balance_angle==0)
-                angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
-//                angle_stop_adjustment -= fabs(pid_out)/pid_out*fabs(pid_out)*SELF_ADJUST_COEFFICIENT;
+            if(balance_angle==0){
+                if(fabs(pid_out) > 700){
+                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+                }
+                else if(fabs(pid_out) > 500 && fabs(pid_out) < 700){
+                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/5;
+                }
+                else if(fabs(pid_out) > 20){
+                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/25;
+                }
+
+                float d_pid_out = pid_out - last_pid_out;
+                if(fabs(d_pid_out)>10)
+                    angle_stop_adjustment -= fabs(d_pid_out)/d_pid_out*SELF_ADJUST_COEFFICIENT_D;
+
+            }
+
+            last_pid_out = pid_out;
 
             // update JS value
             HC_05_read_string(BT_RECEIVE_BUF);
@@ -194,8 +211,12 @@ int main(void){
             }
             else{
                 if(fabs(balance_angle) < angle_inc) balance_angle = 0;
-                else if(balance_angle > 0) balance_angle -= angle_inc;
-                else if(balance_angle < 0) balance_angle += angle_inc;
+                else if(balance_angle > 0) {
+                    balance_angle -= angle_inc;
+                }
+                else if(balance_angle < 0) {
+                    balance_angle += angle_inc;
+                }
             }
 
             main_loop_flag = 0;
