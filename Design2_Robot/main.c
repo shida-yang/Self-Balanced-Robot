@@ -9,6 +9,8 @@
 //#define PID_I   0
 //#define PID_D   0
 
+float flag=0;
+
 float PID_P = 300;
 float PID_I = 20;
 float PID_D = 50;
@@ -25,15 +27,17 @@ float PID_D = 50;
 #define MAX_PID_OUT     (500000/A4988_PULSE_ON_US/(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US))
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
-float F_B_TILE_ANGLE = 1, angle_inc = 0.005;
+float F_B_TILE_ANGLE = 3, angle_inc = 0.005;
 
 float PID_OUT_IGNORE_THRESHOLD = 150;
-float SELF_ADJUST_COEFFICIENT = 0.0015;
 float PID_I_ACCUM_CAP = 1000;
-float BRAKE_COEFFICIENT = 0.00015;
+float BRAKE_COEFFICIENT = 0.01;
 
+float SELF_ADJUST_COEFFICIENT = 0.002;
 float last_pid_out=0;
-float SELF_ADJUST_COEFFICIENT_D = 0.0015;
+float SELF_ADJUST_COEFFICIENT_D = 0;
+float self_balance_accum = 0, self_balance_inst = 0;;
+float d_pid_out = 0;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -111,8 +115,6 @@ int main(void){
 
             // calculate PID output
             error = tilt_angle - (balance_angle + angle_stop_adjustment);
-            if(fabs(pid_out)>(PID_OUT_IGNORE_THRESHOLD*2.5))
-                error += pid_out * BRAKE_COEFFICIENT ;
 
             pid_i_accum += PID_I * error;
             if(pid_i_accum>PID_I_ACCUM_CAP) pid_i_accum = PID_I_ACCUM_CAP;
@@ -179,19 +181,32 @@ int main(void){
             last_error = error;
 
             if(balance_angle==0){
-                if(fabs(pid_out) > 700){
-                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+//                if(fabs(pid_out)<300){
+//                    self_balance_inst -= fabs(self_balance_inst)/self_balance_inst*BRAKE_COEFFICIENT*10;
+//                    if(fabs(self_balance_inst)<BRAKE_COEFFICIENT*10){
+//                        self_balance_inst = 0;
+//                    }
+//                }
+                if(fabs(pid_out)<20){
+                    self_balance_inst = 0;
                 }
-                else if(fabs(pid_out) > 500 && fabs(pid_out) < 700){
-                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/5;
-                }
-                else if(fabs(pid_out) > 20){
-                    angle_stop_adjustment -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/25;
+                else{
+                    self_balance_inst -= fabs(pid_out)/pid_out*BRAKE_COEFFICIENT;
+                    if(self_balance_inst > F_B_TILE_ANGLE) self_balance_inst = F_B_TILE_ANGLE;
+                    if(self_balance_inst < -F_B_TILE_ANGLE) self_balance_inst = -F_B_TILE_ANGLE;
                 }
 
-                float d_pid_out = pid_out - last_pid_out;
-                if(fabs(d_pid_out)>10)
-                    angle_stop_adjustment -= fabs(d_pid_out)/d_pid_out*SELF_ADJUST_COEFFICIENT_D;
+                if(fabs(pid_out) > 700){
+                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+                }
+                else if(fabs(pid_out) > 500 && fabs(pid_out) < 700){
+                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/5;
+                }
+                else if(fabs(pid_out) > 20){
+                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/25;
+                }
+
+                angle_stop_adjustment = self_balance_accum + self_balance_inst;
 
             }
 
@@ -210,12 +225,14 @@ int main(void){
                 if(balance_angle < -F_B_TILE_ANGLE) balance_angle = -F_B_TILE_ANGLE;
             }
             else{
-                if(fabs(balance_angle) < angle_inc) balance_angle = 0;
+                if(fabs(balance_angle) < 0.5){
+                    balance_angle = 0;
+                }
                 else if(balance_angle > 0) {
-                    balance_angle -= angle_inc;
+                    balance_angle -= angle_inc*10;
                 }
                 else if(balance_angle < 0) {
-                    balance_angle += angle_inc;
+                    balance_angle += angle_inc*10;
                 }
             }
 
@@ -375,8 +392,8 @@ __interrupt void cpuTimer1ISR(void){
  */
 __interrupt void batteryAdcISR(void){
     //voltage divider resistor values
-    float R1_VAL_K = 1000;
-    float R2_VAL_K = 220;
+    float R1_VAL_K = 993;
+    float R2_VAL_K = 217;
     //high reference voltage
     float VREFH=3.0;
 
