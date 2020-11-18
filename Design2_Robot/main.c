@@ -9,8 +9,6 @@
 //#define PID_I   0
 //#define PID_D   0
 
-float flag=0;
-
 float PID_P = 300;
 float PID_I = 20;
 float PID_D = 50;
@@ -31,8 +29,9 @@ float F_B_TILE_ANGLE = 3, angle_inc = 0.005;
 
 float PID_OUT_IGNORE_THRESHOLD = 150;
 float PID_I_ACCUM_CAP = 1000;
-float BRAKE_COEFFICIENT = 0.01;
 
+float BRAKE_COEFFICIENT = 0.01;
+bool come_from_pos = 0;
 float SELF_ADJUST_COEFFICIENT = 0.002;
 float last_pid_out=0;
 float SELF_ADJUST_COEFFICIENT_D = 0;
@@ -54,6 +53,7 @@ float tilt_angle, balance_angle, angle_stop_adjustment, error, last_error;
 int32_t left_pulse, left_pulse_count, left_pulse_target,
         right_pulse, right_pulse_count, right_pulse_target;
 float js_x = 0, js_y = 0;
+bool back_to_self_adjust = 0;
 float batt_voltage = 0;
 bool new_batt_voltage = 0;
 
@@ -188,23 +188,40 @@ int main(void){
 //                    }
 //                }
                 if(fabs(pid_out)<20){
-                    self_balance_inst = 0;
+                    self_balance_inst -= fabs(self_balance_inst)/self_balance_inst*BRAKE_COEFFICIENT*5;
+                    if(fabs(self_balance_inst)<BRAKE_COEFFICIENT*10){
+                        self_balance_inst = 0;
+                    }
                 }
                 else{
+                    if(self_balance_inst>0){
+                        if(come_from_pos == 0){
+                            self_balance_inst = 0;
+                            come_from_pos = 1;
+                        }
+                    }
+                    else{
+                        if(come_from_pos == 1){
+                            self_balance_inst = 0;
+                            come_from_pos = 0;
+                        }
+                    }
                     self_balance_inst -= fabs(pid_out)/pid_out*BRAKE_COEFFICIENT;
                     if(self_balance_inst > F_B_TILE_ANGLE) self_balance_inst = F_B_TILE_ANGLE;
                     if(self_balance_inst < -F_B_TILE_ANGLE) self_balance_inst = -F_B_TILE_ANGLE;
                 }
 
-                if(fabs(pid_out) > 700){
-                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
-                }
-                else if(fabs(pid_out) > 500 && fabs(pid_out) < 700){
-                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/5;
-                }
-                else if(fabs(pid_out) > 20){
-                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/25;
-                }
+                self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+
+//                if(fabs(pid_out) > 700){
+//                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+//                }
+//                else if(fabs(pid_out) > 500 && fabs(pid_out) < 700){
+//                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/5;
+//                }
+//                else if(fabs(pid_out) > 20){
+//                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT/25;
+//                }
 
                 angle_stop_adjustment = self_balance_accum + self_balance_inst;
 
@@ -217,16 +234,28 @@ int main(void){
             parse_js_values();
 
             if(js_y > 0){
+                back_to_self_adjust = 0;
                 balance_angle += angle_inc;
                 if(balance_angle > F_B_TILE_ANGLE) balance_angle = F_B_TILE_ANGLE;
             }
             else if(js_y < 0){
+                back_to_self_adjust = 0;
                 balance_angle -= angle_inc;
                 if(balance_angle < -F_B_TILE_ANGLE) balance_angle = -F_B_TILE_ANGLE;
             }
             else{
                 if(fabs(balance_angle) < 0.5){
-                    balance_angle = 0;
+                    if(fabs(pid_out)<20 && !back_to_self_adjust){
+                        back_to_self_adjust = 1;
+                    }
+                    else{
+                        if(back_to_self_adjust){
+                            balance_angle = 0;
+                        }
+                        else{
+                            balance_angle = 0.1;
+                        }
+                    }
                 }
                 else if(balance_angle > 0) {
                     balance_angle -= angle_inc*10;
