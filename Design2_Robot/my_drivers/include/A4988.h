@@ -1,10 +1,10 @@
 #include <F28x_Project.h>
 #include "driverlib.h"
 
-#define RIGHT_DIR_PIN        95
-#define RIGHT_STEP_PIN       139
-#define LEFT_DIR_PIN       56
-#define LEFT_STEP_PIN      97
+#define RIGHT_DIR_PIN        52
+#define RIGHT_STEP_PIN       97
+#define LEFT_DIR_PIN       95
+#define LEFT_STEP_PIN      139
 #define A4988_ENABLE_PIN    94
 #define A4988_SLEEP_PIN     65
 

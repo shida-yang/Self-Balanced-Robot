@@ -26,6 +26,7 @@ float PID_D = 50;
 //#define PID_OUT_IGNORE_THRESHOLD    1
 
 float F_B_TILE_ANGLE = 3, angle_inc = 0.005;
+float MAX_SAFE_SPEED = MAX_PID_OUT/3;
 
 float PID_OUT_IGNORE_THRESHOLD = 150;
 float PID_I_ACCUM_CAP = 1000;
@@ -37,6 +38,7 @@ float last_pid_out=0;
 float SELF_ADJUST_COEFFICIENT_D = 0;
 float self_balance_accum = 0, self_balance_inst = 0;;
 float d_pid_out = 0;
+float angle_stop_cap = 5;
 
 void init_main_timer();
 __interrupt void cpuTimer1ISR(void);
@@ -81,7 +83,7 @@ int main(void){
     initAdc(ADCA_BASE, ADC_CLK_DIV_4_0,  ADC_RESOLUTION_12BIT,
                 ADC_MODE_SINGLE_ENDED);
     initAdcSoc(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
-                   ADC_CH_ADCIN1, 50, ADC_INT_NUMBER1);
+                   ADC_CH_ADCIN1, 256, ADC_INT_NUMBER1);
     Interrupt_register(INT_ADCA1, &batteryAdcISR);
     Interrupt_enable(INT_ADCA1);
 
@@ -212,6 +214,7 @@ int main(void){
                 }
 
                 self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
+                if(fabs(self_balance_accum)>angle_stop_cap) self_balance_accum = fabs(self_balance_accum)/self_balance_accum*angle_stop_cap;
 
 //                if(fabs(pid_out) > 700){
 //                    self_balance_accum -= fabs(pid_out)/pid_out*SELF_ADJUST_COEFFICIENT;
@@ -224,6 +227,7 @@ int main(void){
 //                }
 
                 angle_stop_adjustment = self_balance_accum + self_balance_inst;
+                if(fabs(angle_stop_adjustment)>angle_stop_cap) angle_stop_adjustment = fabs(angle_stop_adjustment)/angle_stop_adjustment*angle_stop_cap;
 
             }
 
@@ -235,13 +239,27 @@ int main(void){
 
             if(js_y > 0){
                 back_to_self_adjust = 0;
-                balance_angle += angle_inc;
+                if(pid_out >= MAX_SAFE_SPEED){
+                    balance_angle -= angle_inc*2;
+                    if(balance_angle <= 0) balance_angle = angle_inc;
+                }
+                else{
+                    balance_angle += angle_inc;
+                    if(balance_angle > F_B_TILE_ANGLE) balance_angle = F_B_TILE_ANGLE;
+                }
                 if(balance_angle > F_B_TILE_ANGLE) balance_angle = F_B_TILE_ANGLE;
             }
             else if(js_y < 0){
                 back_to_self_adjust = 0;
-                balance_angle -= angle_inc;
-                if(balance_angle < -F_B_TILE_ANGLE) balance_angle = -F_B_TILE_ANGLE;
+                if(pid_out <= -MAX_SAFE_SPEED){
+                    balance_angle += angle_inc*2;
+                    if(balance_angle >= 0) balance_angle = -angle_inc;
+                }
+                else{
+                    balance_angle -= angle_inc;
+                    if(balance_angle < -F_B_TILE_ANGLE) balance_angle = -F_B_TILE_ANGLE;
+                }
+
             }
             else{
                 if(fabs(balance_angle) < 0.5){
@@ -253,7 +271,8 @@ int main(void){
                             balance_angle = 0;
                         }
                         else{
-                            balance_angle = 0.1;
+                            if(balance_angle > 0) balance_angle = 0.1;
+                            if(balance_angle < 0) balance_angle = -0.1;
                         }
                     }
                 }
@@ -421,8 +440,8 @@ __interrupt void cpuTimer1ISR(void){
  */
 __interrupt void batteryAdcISR(void){
     //voltage divider resistor values
-    float R1_VAL_K = 993;
-    float R2_VAL_K = 217;
+    float R1_VAL_K = 9.86;
+    float R2_VAL_K = 2.09;
     //high reference voltage
     float VREFH=3.0;
 
