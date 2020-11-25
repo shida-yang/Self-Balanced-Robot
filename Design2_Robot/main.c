@@ -68,8 +68,6 @@ int main(void){
     //init system clocks and get board speed running at 200 MHz
     InitSysCtrl();
 
-    DELAY_US(1000000);
-
     EALLOW;
     //disable all interrupt
     Interrupt_initModule();
@@ -83,15 +81,6 @@ int main(void){
     HC_05_init();
     MPU6050_Powerup();
     A4988_INIT();
-
-//        GpioCtrlRegs.GPDDIR.bit.GPIO105 = 1;
-//        GpioDataRegs.GPDCLEAR.bit.GPIO105 = 1;
-//        while(1){
-//            GpioDataRegs.GPDSET.bit.GPIO105 = 1;
-//            DELAY_US(1000);
-//            GpioDataRegs.GPDCLEAR.bit.GPIO105 = 1;
-//            DELAY_US(1000);
-//        }
 
     initAdc(ADCA_BASE, ADC_CLK_DIV_4_0,  ADC_RESOLUTION_12BIT,
                 ADC_MODE_SINGLE_ENDED);
@@ -166,11 +155,11 @@ int main(void){
             // calculate right output
             out_right = pid_out;
 
-            if(js_x > 30){
+            if(js_x > 200){
                 out_right += TURN_SPEED;
                 out_left -= TURN_SPEED;
             }
-            else if(js_x < -30){
+            else if(js_x < -200){
                 out_right -= TURN_SPEED;
                 out_left += TURN_SPEED;
             }
@@ -259,7 +248,7 @@ int main(void){
             HC_05_read_string(BT_RECEIVE_BUF);
             parse_js_values();
 
-            if(js_y > 0){
+            if(js_y > 30){
                 back_to_self_adjust = 0;
                 if(pid_out >= MAX_SAFE_SPEED){
                     balance_angle -= angle_inc*2;
@@ -271,7 +260,7 @@ int main(void){
                 }
                 if(balance_angle > F_B_TILE_ANGLE) balance_angle = F_B_TILE_ANGLE;
             }
-            else if(js_y < 0){
+            else if(js_y < -30){
                 back_to_self_adjust = 0;
                 if(pid_out <= -MAX_SAFE_SPEED){
                     balance_angle += angle_inc*2;

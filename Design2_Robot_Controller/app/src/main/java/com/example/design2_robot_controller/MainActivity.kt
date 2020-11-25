@@ -100,22 +100,22 @@ class MainActivity : AppCompatActivity() {
                         val temp_string = String(buffer, 0, buf_pos)
 
                         // current string is tile angle
-                        if(temp_string.startsWith("TA", ignoreCase = false)){
-                            TILE_ANGLE_TEXT_VIEW.text = temp_string.substring(2);
+                        if(temp_string.contains("TA", ignoreCase = false)){
+                            TILE_ANGLE_TEXT_VIEW.text = temp_string.substringAfter("TA");
                         }
                         // current string is battery voltage
-                        else if(temp_string.startsWith("BV", ignoreCase = false)){
-                            BATT_LEVEL_TEXT_VIEW.text = temp_string.substring(2);
+                        else if(temp_string.contains("BV", ignoreCase = false)){
+                            BATT_LEVEL_TEXT_VIEW.text = temp_string.substringAfter("BV");
                             // healthy battery level (green)
-                            if(temp_string.substring(2).toDouble() > 11.4){
+                            if(temp_string.substringAfter("BV").toDouble() > 11.4){
                                 BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#00FF00"))
                             }
                             // need to charge soon (yellow)
-                            else if(temp_string.substring(2).toDouble() <= 11.4 && temp_string.substring(2).toDouble() > 11.1){
+                            else if(temp_string.substringAfter("BV").toDouble() <= 11.4 && temp_string.substringAfter("BV").toDouble() > 11.1){
                                 BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#FFFF00"))
                             }
                             // need to charge now (red)
-                            else if(temp_string.substring(2).toDouble() <= 11.1){
+                            else if(temp_string.substringAfter("BV").toDouble() <= 11.1){
                                 BATT_LEVEL_TEXT_VIEW.setTextColor(Color.parseColor("#FF0000"))
                             }
                         }
