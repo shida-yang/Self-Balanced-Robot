@@ -55,7 +55,6 @@ float tilt_angle, balance_angle, angle_stop_adjustment, error, last_error;
 int32_t left_pulse, left_pulse_count, left_pulse_target,
         right_pulse, right_pulse_count, right_pulse_target;
 float js_x = 0, js_y = 0;
-float TURN_SPEED = 100;
 bool back_to_self_adjust = 0;
 float batt_voltage = 0;
 bool new_batt_voltage = 0;
@@ -67,9 +66,6 @@ int main(void){
 
     //init system clocks and get board speed running at 200 MHz
     InitSysCtrl();
-
-    DELAY_US(1000000);
-
     EALLOW;
     //disable all interrupt
     Interrupt_initModule();
@@ -83,15 +79,6 @@ int main(void){
     HC_05_init();
     MPU6050_Powerup();
     A4988_INIT();
-
-//        GpioCtrlRegs.GPDDIR.bit.GPIO105 = 1;
-//        GpioDataRegs.GPDCLEAR.bit.GPIO105 = 1;
-//        while(1){
-//            GpioDataRegs.GPDSET.bit.GPIO105 = 1;
-//            DELAY_US(1000);
-//            GpioDataRegs.GPDCLEAR.bit.GPIO105 = 1;
-//            DELAY_US(1000);
-//        }
 
     initAdc(ADCA_BASE, ADC_CLK_DIV_4_0,  ADC_RESOLUTION_12BIT,
                 ADC_MODE_SINGLE_ENDED);
@@ -165,15 +152,6 @@ int main(void){
 
             // calculate right output
             out_right = pid_out;
-
-            if(js_x > 30){
-                out_right += TURN_SPEED;
-                out_left -= TURN_SPEED;
-            }
-            else if(js_x < -30){
-                out_right -= TURN_SPEED;
-                out_left += TURN_SPEED;
-            }
 
             // calculate left pulses
             left_pulse = 500000 / A4988_PULSE_ON_US / out_left;
@@ -263,7 +241,7 @@ int main(void){
                 back_to_self_adjust = 0;
                 if(pid_out >= MAX_SAFE_SPEED){
                     balance_angle -= angle_inc*2;
-                    if(balance_angle <= 0) balance_angle = -angle_inc;
+                    if(balance_angle <= 0) balance_angle = angle_inc;
                 }
                 else{
                     balance_angle += angle_inc;
@@ -275,7 +253,7 @@ int main(void){
                 back_to_self_adjust = 0;
                 if(pid_out <= -MAX_SAFE_SPEED){
                     balance_angle += angle_inc*2;
-                    if(balance_angle >= 0) balance_angle = angle_inc;
+                    if(balance_angle >= 0) balance_angle = -angle_inc;
                 }
                 else{
                     balance_angle -= angle_inc;
@@ -414,46 +392,46 @@ __interrupt void cpuTimer1ISR(void){
         // update direction
         if(left_pulse < 0){
             set_dir(LEFT, BACKWARD);
-//            set_dir(RIGHT, BACKWARD);
+            set_dir(RIGHT, BACKWARD);
             left_pulse_target = left_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
         }
         else{
             set_dir(LEFT, FORWARD);
-//            set_dir(RIGHT, FORWARD);
+            set_dir(RIGHT, FORWARD);
             left_pulse_target = left_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?left_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
         }
     }
     else if(left_pulse_count == 1){
         step_high(LEFT);
-//        step_high(RIGHT);
+        step_high(RIGHT);
     }
     else if(left_pulse_count == 2){
         step_low(LEFT);
-//        step_low(RIGHT);
+        step_low(RIGHT);
     }
     left_pulse_count ++;
 
     // handle right pulses
     // need to handle this first in case of 0 target
-    if(right_pulse_count >= right_pulse_target){
-        right_pulse_count = 0;           // reset count
-        // update direction
-        if(right_pulse < 0){
-            set_dir(RIGHT, BACKWARD);
-            right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-        }
-        else{
-            set_dir(RIGHT, FORWARD);
-            right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
-        }
-    }
-    else if(right_pulse_count == 1){
-        step_high(RIGHT);
-    }
-    else if(right_pulse_count == 2){
-        step_low(RIGHT);
-    }
-    right_pulse_count ++;
+//    if(right_pulse_count >= right_pulse_target){
+//        right_pulse_count = 0;           // reset count
+//        // update direction
+//        if(right_pulse < 0){
+//            set_dir(RIGHT, BACKWARD);
+//            right_pulse_target = right_pulse<(-MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?-right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//        }
+//        else{
+//            set_dir(RIGHT, FORWARD);
+//            right_pulse_target = right_pulse>(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US)?right_pulse:(MIN_TIME_BETWEEN_PULSE/A4988_PULSE_ON_US); // update target
+//        }
+//    }
+//    else if(right_pulse_count == 1){
+//        step_high(RIGHT);
+//    }
+//    else if(right_pulse_count == 2){
+//        step_low(RIGHT);
+//    }
+//    right_pulse_count ++;
 }
 
 
