@@ -1,0 +1,14 @@
+Removed Pin From Net: NetName=5V_USB Pin=J-01
+Removed Pin From Net: NetName=GND Pin=J-04
+Removed Member From Class: ClassName=Main_PCB Member=J
+Added Component: Designator=J1(SS52100001)
+Add component (AddParameter): Name = "Datasheet Link"; Value = ""; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Height"; Value = "7.9mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Name"; Value = "Bel"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Part_Number"; Value = "SS-52100-001"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser2 Part Number"; Value = ""; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser2 Price/Stock"; Value = ""; VariantName = "[No Variations]"
+Added Pin To Net: NetName=5V_USB Pin=J1-1
+Added Pin To Net: NetName=GND Pin=J1-4
+Added Member To Class: ClassName=Main_PCB Member=Component J1 SS-52100-001
+Added Room: Name=Main_PCB
