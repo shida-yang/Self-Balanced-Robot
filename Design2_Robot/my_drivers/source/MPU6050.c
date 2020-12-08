@@ -322,7 +322,7 @@ __interrupt void i2caISR(void){
             float delta_gyro_y_angle = (float)(last_dp.gyro_y - calibration_dp.gyro_y) * TIMER0_PER / GYRO_RES;
             float accel_angle = MPU6050_GetAccelAngle();
             float adjusted_gyro_z_reading = last_dp.gyro_z - calibration_dp.gyro_z;
-            current_gyro_angle = (current_gyro_angle + delta_gyro_y_angle + adjusted_gyro_z_reading * 0) * 0.9990 + (accel_angle) * 0.0010;
+            current_gyro_angle = (current_gyro_angle + delta_gyro_y_angle - adjusted_gyro_z_reading * 0) * 0.9990 + (accel_angle) * 0.0010;
             update_accel_gyro_i2c_state = IDLEING;
         }
         break;
